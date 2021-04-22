@@ -19,7 +19,6 @@
 
 package org.apache.iotdb.cluster.log.manage;
 
-import java.util.Arrays;
 import org.apache.iotdb.cluster.config.ClusterDescriptor;
 import org.apache.iotdb.cluster.exception.EntryCompactedException;
 import org.apache.iotdb.cluster.exception.EntryUnavailableException;
@@ -41,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -944,7 +944,6 @@ public abstract class RaftLogManager {
             nextToCheckIndex);
         return;
       }
-      boolean stuckLogPrinted = false;
       long waitedTime;
       long waitStartTime = System.currentTimeMillis();
       synchronized (log) {
@@ -952,12 +951,15 @@ public abstract class RaftLogManager {
           // wait until the log is applied or a newer snapshot is installed
           log.wait(5);
           waitedTime = System.currentTimeMillis() - waitStartTime;
-          if (!stuckLogPrinted && waitedTime > 60_000L) {
+          if (waitedTime > 60_000L) {
             Thread applyingThread = log.getApplyingThread();
-            logger.error("The application of log {} is stuck for over 1 minutes, processing "
-                + "thread: {}, thread traces: {}", log, applyingThread,
+            logger.error(
+                "The application of log {} is stuck for over 1 minutes, processing "
+                    + "thread: {}, thread traces: {}",
+                log,
+                applyingThread,
                 applyingThread != null ? Arrays.toString(applyingThread.getStackTrace()) : "null");
-            stuckLogPrinted = true;
+            waitStartTime = System.currentTimeMillis();
           }
         }
       }
