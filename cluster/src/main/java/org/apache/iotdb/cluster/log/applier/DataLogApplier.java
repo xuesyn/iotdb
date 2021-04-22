@@ -61,6 +61,7 @@ public class DataLogApplier extends BaseApplier {
 
   @Override
   public void apply(Log log) {
+    log.setApplyingThread(Thread.currentThread());
     logger.debug("DataMember [{}] start applying Log {}", dataGroupMember.getName(), log);
 
     try {

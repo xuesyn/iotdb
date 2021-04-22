@@ -47,6 +47,9 @@ public abstract class Log implements Comparable<Log> {
 
   private int byteSize = 0;
 
+  // the thread that is applying this log, for debugging stuck applications
+  private Thread applyingThread;
+
   public abstract ByteBuffer serialize();
 
   public abstract void deserialize(ByteBuffer buffer);
@@ -141,5 +144,13 @@ public abstract class Log implements Comparable<Log> {
 
   public void setByteSize(int byteSize) {
     this.byteSize = byteSize;
+  }
+
+  public Thread getApplyingThread() {
+    return applyingThread;
+  }
+
+  public void setApplyingThread(Thread applyingThread) {
+    this.applyingThread = applyingThread;
   }
 }

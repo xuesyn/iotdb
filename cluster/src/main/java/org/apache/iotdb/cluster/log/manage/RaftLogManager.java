@@ -19,6 +19,7 @@
 
 package org.apache.iotdb.cluster.log.manage;
 
+import java.util.Arrays;
 import org.apache.iotdb.cluster.config.ClusterDescriptor;
 import org.apache.iotdb.cluster.exception.EntryCompactedException;
 import org.apache.iotdb.cluster.exception.EntryUnavailableException;
@@ -943,10 +944,21 @@ public abstract class RaftLogManager {
             nextToCheckIndex);
         return;
       }
+      boolean stuckLogPrinted = false;
+      long waitedTime;
+      long waitStartTime = System.currentTimeMillis();
       synchronized (log) {
         while (!log.isApplied() && maxHaveAppliedCommitIndex < log.getCurrLogIndex()) {
           // wait until the log is applied or a newer snapshot is installed
           log.wait(5);
+          waitedTime = System.currentTimeMillis() - waitStartTime;
+          if (!stuckLogPrinted && waitedTime > 60_000L) {
+            Thread applyingThread = log.getApplyingThread();
+            logger.error("The application of log {} is stuck for over 1 minutes, processing "
+                + "thread: {}, thread traces: {}", log, applyingThread,
+                applyingThread != null ? Arrays.toString(applyingThread.getStackTrace()) : "null");
+            stuckLogPrinted = true;
+          }
         }
       }
       synchronized (changeApplyCommitIndexCond) {

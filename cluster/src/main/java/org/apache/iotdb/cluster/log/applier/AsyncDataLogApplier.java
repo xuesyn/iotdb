@@ -87,7 +87,7 @@ public class AsyncDataLogApplier implements LogApplier {
   // synchronized: when a log is draining consumers, avoid other threads adding more logs so that
   // the consumers will never be drained
   public synchronized void apply(Log log) {
-
+    log.setApplyingThread(Thread.currentThread());
     PartialPath logKey;
     try {
       logKey = getLogKey(log);
